@@ -4802,11 +4802,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\WorkSpace\\Demo\\ReadExcelDemo\\ReadExcelDemo\\ReadExcelDemo.csproj",
+      "projectUniqueName": "D:\\WorkSpace\\GitHub\\ReadExcelDemo\\ReadExcelDemo.csproj",
       "projectName": "ReadExcelDemo",
-      "projectPath": "D:\\WorkSpace\\Demo\\ReadExcelDemo\\ReadExcelDemo\\ReadExcelDemo.csproj",
+      "projectPath": "D:\\WorkSpace\\GitHub\\ReadExcelDemo\\ReadExcelDemo.csproj",
       "packagesPath": "C:\\Users\\11\\.nuget\\packages\\",
-      "outputPath": "D:\\WorkSpace\\Demo\\ReadExcelDemo\\ReadExcelDemo\\obj\\",
+      "outputPath": "D:\\WorkSpace\\GitHub\\ReadExcelDemo\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
