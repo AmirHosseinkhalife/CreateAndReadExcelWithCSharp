@@ -148,5 +148,66 @@ namespace ReadExcelDemo
             }
             return dataTable;
         }
+
+
+        
+        public byte[] ToExcel<T>(IEnumerable<T> objs) where T : class
+        {
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("data");
+                var currentRow = 1;
+                worksheet.Cell(currentRow, 1).Value = "ردیف";
+                worksheet.SetRightToLeft();
+                worksheet.SetShowRowColHeaders();
+                worksheet.SetAutoFilter();
+                worksheet.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                worksheet.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+                worksheet.ColumnWidth = 30;
+                worksheet.Row(1).Height = 30;
+
+                Type myType = (objs.First()).GetType();
+                var props = new List<PropertyInfo>(myType.GetProperties().ToList()).ToArray();
+                worksheet.FirstRow().Cells(1, props.Length + 1).Style.Fill.SetBackgroundColor(XLColor.Tomato);
+                worksheet.FirstRow().Cells(1, props.Length + 1).Style.Font.SetFontColor(XLColor.White);
+                worksheet.FirstRow().Cells(1, props.Length + 1).Style.Font.SetBold();
+                worksheet.FirstRow().Cells(1, props.Length + 1).Style.Font.SetFontSize(13.0);
+                for (int i = 0; i < props.Length; i++)
+                {
+                    var prop = props[i];
+                    var propname = prop.CustomAttributes.Any(a => a.AttributeType.Name == "DisplayAttribute") ? prop.CustomAttributes.First(f => f.AttributeType.Name == "DisplayAttribute").NamedArguments.First(f => f.MemberName == "Name").TypedValue.Value.ToString() : prop.Name;
+                    worksheet.Cell(currentRow, i + 2).Value = propname;
+                }
+                foreach (var obj in objs)
+                {
+                    currentRow++;
+                    worksheet.Cell(currentRow, 1).Value = currentRow - 1;
+
+                    for (int i = 0; i < props.Length; i++)
+                    {
+                        var value = props[i].GetValue(obj)?.ToString();
+                        worksheet.Cell(currentRow, i + 2).Value = value;
+                    }
+                }
+                using (var stream = new MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    var content = stream.ToArray();
+                    return content;
+                }
+
+            }
+        }
+
+
+        private void ExportExcel_Click(object sender, EventArgs e)
+        {
+            var excel = ToExcel(dataModels);
+            string fileName = $"DataToExcel-{DateTime.Now.Ticks}.xls";
+            using (FileStream fsNew = new FileStream(fileName, FileMode.Create, FileAccess.Write))
+            {
+                fsNew.Write(excel, 0, excel.Length);
+            }
+        }
     }
 }
