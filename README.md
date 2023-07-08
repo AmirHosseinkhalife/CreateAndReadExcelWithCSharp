@@ -1,2 +1,2 @@
 # Read and Create Excel With C#
-Read and Create Excel File and Convert to Data Model Class Or DataTable in C# WindowsForm ( .net 6 )
+Reading and Creating  Excel File (with Generic Type) and Converting it to a Custom DataModel Class or DataTable in C# WindowsForm (.net 6)
