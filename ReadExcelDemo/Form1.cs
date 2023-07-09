@@ -1,13 +1,15 @@
-﻿using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Spreadsheet;
+using ClosedXML.Excel;
 using System.Data;
-using System.Net;
 using System.Reflection;
 
 namespace ReadExcelDemo
 {
     public partial class Form1 : Form
     {
+
+        public List<DataModel> dataModels = new List<DataModel>();
+
+
         public Form1()
         {
             InitializeComponent();
@@ -15,105 +17,55 @@ namespace ReadExcelDemo
 
         private Dictionary<string, List<string>> getPropNames()
         {
+            // درصورتی که در هدر اکسل از نام های فارسی استفاده شده باشد ،با تعریف مقادیر زیر 
+            // اطلاعات ردیف مربوطه را در فیلد انتخابی قرار می دهد
+
+
             var keyValuePairs = new Dictionary<string, List<string>>();
-
-            keyValuePairs.Add("AccountNumber"
-          , new List<string>() { "شماره حساب", "ش حساب" });
-
-            keyValuePairs.Add("IBAN"
-          , new List<string>() { "شماره شبا" });
-
-            keyValuePairs.Add("NationalCode"
-          , new List<string>() { "کد ملی", "شناسه ملی" ,"ش ملی","شماره ملی", "ش.م", "ش م" });
-
             keyValuePairs.Add("FirstName"
           , new List<string>() { "نام", "اسم" });
 
             keyValuePairs.Add("LastName"
-          , new List<string>() { "نام خانوادگی", "فامیلی" });
+          , new List<string>() { "شهرت", "نام خانوادگی", "فامیلی" });
 
-            keyValuePairs.Add("DocumentDescription"
-          , new List<string>() { "شرح سند" });
+            keyValuePairs.Add("NationalCode"
+        , new List<string>() { "کد ملی", "شماره ملی", "شناسه ملی", "ش ملی" });
 
-            keyValuePairs.Add("Debtor"
-          , new List<string>() { "بدهکار" });
+            keyValuePairs.Add("PhoneNumber"
+        , new List<string>() { "شماره موبایل", "موبایل", "تلفن همراه", "شماره تلفن همراه", "شماره تلفن" });
 
-            keyValuePairs.Add("Creditor"
-          , new List<string>() { "بستانکار" });
-
-            keyValuePairs.Add("AccountBalance"
-          , new List<string>() { "مانده حساب" });
-
-            keyValuePairs.Add("DocumentNumber"
-          , new List<string>() { "شماره سند", "ش سند" });
-
-            keyValuePairs.Add("TerminalNumber"
-          , new List<string>() { "شماره ترمینال", "ش ترمینال" });
-
-            keyValuePairs.Add("TrackingCode"
-          , new List<string>() { "کد پیگیری" });
-
-            keyValuePairs.Add("BankName"
-          , new List<string>() { "نام بانک" });
-
-            keyValuePairs.Add("BankCode"
-          , new List<string>() { "کد بانک" });
-
-            keyValuePairs.Add("BranchName"
-          , new List<string>() { "نام شعبه" });
-
-            keyValuePairs.Add("BranchCode"
-          , new List<string>() { "کد شعبه" });
+            keyValuePairs.Add("PhoneNumbeaaar"
+     , new List<string>() { "شماره موبایل", "موبایل", "تلفن همراه", "شماره تلفن همراه", "شماره تلفن" });
 
             return keyValuePairs;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void ImportExcel(object sender, EventArgs e)
         {
+
             OpenFileDialog file = new OpenFileDialog();
             if (file.ShowDialog() == DialogResult.OK)
             {
                 string fileExt = Path.GetExtension(file.FileName);
                 if (fileExt.CompareTo(".xls") == 0 || fileExt.CompareTo(".xlsx") == 0)
                 {
+
                     try
                     {
-                        var propNames = getPropNames();
+                        dataModels = convertExcelToDataModel<DataModel>(file).ToList();
 
-                        List<DataModel> models = new List<DataModel>();
+                        dataGridView1.DataSource = ToDataTable(dataModels);
 
-                        var workbook = new XLWorkbook(file.FileName);
-                        var ws1 = workbook.Worksheet(1);
 
-                        var rowCount = ws1.RowCount();
-                        var firstRow = ws1.FirstRow().RowUsed();
-                        var headerTitles = firstRow.CellsUsed().ToList();
-
-                        IDictionary<string, string> celsName = headerTitles
-                            .Where(cell => propNames.Any(a => a.Value.Contains(cell.GetValue<string>())))
-                            .ToDictionary(pair => pair.Address.ColumnLetter, pair => propNames.FirstOrDefault(a => a.Value.Contains(pair.GetValue<string>())).Key);
-
-                        var rows = ws1.RowsUsed();
-                        foreach (var row in rows)
+                        if (dataModels.Count() > 0)
                         {
-                            var newModel = new DataModel();
-                            var type = newModel.GetType();
-                            var props = new List<PropertyInfo>(type.GetProperties().ToList()).ToArray();
-
-                            foreach (var cell in row.CellsUsed())
-                            {
-                                var celValue = cell.GetValue<string>();
-                                if (celsName.Any(a => a.Key == cell.Address.ColumnLetter))
-                                {
-                                    var celName = celsName[cell.Address.ColumnLetter];
-                                    var prop = props.First(a => a.Name == celName);
-                                    prop.SetValue(newModel, cell.GetValue<string>());
-                                }
-                            }
-                            models.Add(newModel);
+                            ExportExcel.Visible = true;
+                        }
+                        else
+                        {
+                            ExportExcel.Visible = false;
                         }
 
-                        dataGridView1.DataSource = ToDataTable(models);
                     }
                     catch (Exception ex)
                     {
@@ -129,13 +81,15 @@ namespace ReadExcelDemo
 
         }
 
-        public DataTable ToDataTable<T>(List<T> items)
+
+        public System.Data.DataTable ToDataTable<T>(List<T> items)
         {
-            DataTable dataTable = new DataTable(typeof(T).Name);
+            System.Data.DataTable dataTable = new System.Data.DataTable(typeof(T).Name);
             PropertyInfo[] Props = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
             foreach (PropertyInfo prop in Props)
             {
-                dataTable.Columns.Add(prop.Name);
+                string propName = prop.CustomAttributes.Any(a => a.AttributeType.Name == "DisplayAttribute") ? prop.CustomAttributes.First(f => f.AttributeType.Name == "DisplayAttribute").NamedArguments.First(f => f.MemberName == "Name").TypedValue.Value.ToString() : prop.Name;
+                dataTable.Columns.Add(propName);
             }
             foreach (T item in items)
             {
@@ -149,9 +103,7 @@ namespace ReadExcelDemo
             return dataTable;
         }
 
-
-        
-        public byte[] ToExcel<T>(IEnumerable<T> objs) where T : class
+        public byte[] convertDataModelToExcel<T>(IEnumerable<T> objs) where T : class
         {
             using (var workbook = new XLWorkbook())
             {
@@ -202,12 +154,60 @@ namespace ReadExcelDemo
 
         private void ExportExcel_Click(object sender, EventArgs e)
         {
-            var excel = ToExcel(dataModels);
+            var excel = convertDataModelToExcel(dataModels);
             string fileName = $"DataToExcel-{DateTime.Now.Ticks}.xls";
             using (FileStream fsNew = new FileStream(fileName, FileMode.Create, FileAccess.Write))
             {
                 fsNew.Write(excel, 0, excel.Length);
             }
+        }
+
+        private IEnumerable<T> convertExcelToDataModel<T>(OpenFileDialog file) where T : class
+        {
+            List<T> data = new List<T>();
+            var propNames = getPropNames();
+
+            var type = typeof(T);
+
+            var props = new List<PropertyInfo>(type.GetProperties().ToList()).ToArray();
+
+
+            var workbook = new XLWorkbook(file.FileName);
+            var ws1 = workbook.Worksheet(1);
+
+            var rowCount = ws1.RowCount();
+            var rows = ws1.RowsUsed().Skip(1);
+            var firstRow = ws1.RowsUsed().First();
+            var headerTitles = firstRow.CellsUsed().ToList();
+
+            IDictionary<string, string> celsName = headerTitles
+                .ToDictionary(
+                pair => pair.Address.ColumnLetter,
+                pair =>
+                propNames.Any(a => a.Value.Contains(pair.GetValue<string>())) ? propNames.FirstOrDefault(a => a.Value.Contains(pair.GetValue<string>())).Key  // اگه نام فارسیش وجود داشت کلیدش رو بزار
+                : (propNames.Any(a => a.Key.Contains(pair.GetValue<string>())) ? pair.GetValue<string>() // اگه هدر برابر با نام پراپرتی بود خودشو بزار
+                : (props.Any(a => a.Name == pair.GetValue<string>()) ? pair.GetValue<string>() : "NotSet"))); // اگه تو لیست نام ها وجود نداشت ولی توی پراپرتی های کلاس وجود داشت ، اسم پراپرتی رو بزار
+
+            foreach (var row in rows)
+            {
+                var newModel = (T)Activator.CreateInstance(type);
+                foreach (var cell in row.CellsUsed().Where(w => celsName.Select(s => s.Key).Contains(w.Address.ColumnLetter)))
+                {
+
+                    var celValue = cell.GetValue<string>();
+                    var celName = celsName[cell.Address.ColumnLetter];
+                    var prop = props.FirstOrDefault(a => a.Name == celName);
+                    if (prop != null)
+                    {
+                        prop.SetValue(newModel, celValue);
+                    }
+
+                }
+                data.Add(newModel);
+            }
+
+            return data;
+
         }
     }
 }
